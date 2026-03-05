@@ -122,7 +122,7 @@ toast.promise(request('/merge', { body: formData, download: true }), {
 ```bash
 cd backend
 uv run uvicorn main:app --reload
-# API at http://localhost:8000
+# API at http://localhost:8585
 ```
 
 ### Frontend
@@ -130,14 +130,14 @@ uv run uvicorn main:app --reload
 cd frontend
 pnpm dev
 # UI at http://localhost:5173
-# /api/* proxied to http://localhost:8000
+# /api/* proxied to http://localhost:8585
 ```
 
 ### Production
 ```bash
 cp .env.example .env
 docker compose up --build
-# Everything at http://localhost:8000
+# Everything at http://localhost:8585
 ```
 
 ## URL routing

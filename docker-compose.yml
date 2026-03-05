@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${BACKEND_PORT:-8585}:8585"
     env_file:
       - .env
     restart: unless-stopped

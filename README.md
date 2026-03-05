@@ -33,8 +33,8 @@ uv sync
 uv run uvicorn main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`.
-Health check: `GET http://localhost:8000/health`
+The API will be available at `http://localhost:8585`.
+Health check: `GET http://localhost:8585/health`
 
 ### Frontend
 
@@ -53,7 +53,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The app will be available at `http://localhost:8000`.
+The app will be available at `http://localhost:8585`.
 
 ## Environment variables
 
@@ -62,6 +62,6 @@ Copy `.env.example` to `.env` and adjust as needed.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `BACKEND_HOST` | `0.0.0.0` | Host the API binds to |
-| `BACKEND_PORT` | `8000` | Port the API listens on |
+| `BACKEND_PORT` | `8585` | Port the API listens on |
 | `BACKEND_RELOAD` | `true` | Enable hot reload (dev only) |
 | `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated CORS origins |
