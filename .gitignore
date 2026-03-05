@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Editor
+.vscode/
+
 # OS
 .DS_Store
 Thumbs.db

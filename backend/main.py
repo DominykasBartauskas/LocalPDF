@@ -1,11 +1,9 @@
 import os
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from pypdf import PdfReader
-from utils import temp_pdf
+from routers import info
 
 load_dotenv()
 
@@ -21,24 +19,12 @@ app.add_middleware(
     allow_headers=["Content-Type", "Accept"],
 )
 
+app.include_router(info.router, prefix="/api")
+
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-
-@app.post("/info")
-async def info(file: UploadFile = File(...)):
-    async with temp_pdf(file) as path:
-        reader = PdfReader(path)
-        meta = reader.metadata or {}
-
-        return JSONResponse({
-            "pages": len(reader.pages),
-            "size_bytes": path.stat().st_size,
-            "title": meta.get("/Title", "") or "",
-            "author": meta.get("/Author", "") or "",
-        })
 
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
