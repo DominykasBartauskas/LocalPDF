@@ -1,0 +1,157 @@
+# LocalPDF — Claude Project Rules
+
+## Project overview
+A self-hosted PDF toolkit (merge, split, rotate, compress, etc.) for homelab use.
+Single Docker service: FastAPI serves both the API and the built React frontend.
+No auth. No external uploads. Fully private.
+
+## Current state
+- ✅ /api/info
+- ⬜ /api/merge
+- ⬜ /api/split
+- ⬜ /api/rotate
+- ⬜ /api/delete
+- ⬜ /api/reorder
+- ⬜ /api/compress
+- ⬜ /api/extract-images
+
+## Stack
+- **Backend**: Python 3.12, FastAPI, uv — lives in `backend/`
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, DaisyUI, pnpm — lives in `frontend/`
+- **PDF processing**: pypdf, pikepdf, Pillow
+- **Notifications**: react-hot-toast
+- **Deployment**: Docker + Docker Compose (single service)
+
+## Project structure
+```
+backend/
+  main.py           # App setup, middleware, router registration, static mount
+  utils.py          # Shared utilities (temp_pdf context manager)
+  routers/          # One file per feature/tool
+    info.py
+frontend/
+  src/
+    App.tsx
+    main.tsx
+    hooks/
+      useApi.ts     # Shared API hook — use for every backend call
+    components/
+      FileDropzone.tsx   # Shared dropzone — use for every file upload
+      (one file per tool)
+```
+
+## Backend conventions
+
+### Routes
+- All API endpoints live under `/api/*` via `app.include_router(router, prefix="/api")`
+- Each tool gets its own router file in `backend/routers/`
+- `main.py` only contains: app setup, middleware, router registrations, static mount
+- `/health` lives directly in `main.py` (no prefix)
+
+### File uploads
+- Always use the `temp_pdf` async context manager from `utils.py`
+- Never inline temp file logic in route handlers
+
+```python
+async with temp_pdf(file) as path:
+    ...
+```
+
+- If the uploaded file is not a valid PDF, `PdfReader` will raise `PdfReadError` — catch it and return `HTTPException(400, "Invalid or corrupted PDF")`
+
+### Blocking I/O
+- All pypdf/pikepdf/Pillow operations are synchronous — always offload via `run_in_executor`
+
+```python
+loop = asyncio.get_running_loop()
+data = await loop.run_in_executor(None, _sync_helper, path)
+```
+
+### Error handling
+- Catch `PdfReadError` (and other library-specific exceptions) and raise `HTTPException(status_code=400)`
+- Never let unhandled library exceptions propagate as 500s
+
+### Dependencies
+- Manage with `uv add` — never edit `pyproject.toml` manually
+- All runtime deps go in `[project.dependencies]`, not dev deps
+
+## Frontend conventions
+
+### API calls
+- Always use the `useApi` hook — never call `fetch` directly in components
+- The hook handles loading state, errors, and file downloads
+- JSON endpoints return `{ data, loading, error, request }` — render `data` as needed
+- Download endpoints (`download: true`) resolve with `null` data — do not attempt to render the response
+
+```ts
+const { data, loading, error, request } = useApi<ResponseType>()
+await request('/info', { body: formData })
+await request('/merge', { body: formData, download: true, filename: 'merged.pdf' })
+```
+
+### File uploads
+- Always use the `FileDropzone` component — never build custom dropzones
+
+```tsx
+<FileDropzone onFiles={handleFiles} />
+<FileDropzone onFiles={handleFiles} multiple label="Drop PDFs to merge" />
+```
+
+### Notifications
+- Use `react-hot-toast` for all user feedback
+- Prefer `toast.promise()` for async operations
+
+```ts
+toast.promise(request('/merge', { body: formData, download: true }), {
+  loading: 'Merging...', success: 'Done!', error: 'Something went wrong',
+})
+```
+
+### Styling
+- Tailwind CSS v4 for layout and spacing
+- DaisyUI components for UI elements (buttons, cards, modals, alerts)
+- No heavy UI libraries — keep it lean
+- One component file per tool in `src/components/`
+
+### Package manager
+- Always use `pnpm` — never `npm` or `yarn`
+
+## Dev workflow
+
+### Backend
+```bash
+cd backend
+uv run uvicorn main:app --reload
+# API at http://localhost:8000
+```
+
+### Frontend
+```bash
+cd frontend
+pnpm dev
+# UI at http://localhost:5173
+# /api/* proxied to http://localhost:8000
+```
+
+### Production
+```bash
+cp .env.example .env
+docker compose up --build
+# Everything at http://localhost:8000
+```
+
+## URL routing
+| Context | Frontend calls | Reaches backend at |
+|---------|---------------|-------------------|
+| Dev | `fetch('/api/info')` → Vite proxy | `POST /api/info` |
+| Production | `fetch('/api/info')` → same origin | `POST /api/info` |
+
+The Vite proxy forwards `/api/*` without rewriting — the `/api` prefix is preserved end-to-end.
+
+## What NOT to do
+- Do not add auth — this is intentionally auth-free
+- Do not add heavy UI libraries (no MUI, Chakra, Radix, etc.)
+- Do not call `fetch` directly in components — use `useApi`
+- Do not inline temp file handling — use `temp_pdf`
+- Do not run blocking PDF operations on the event loop — use `run_in_executor`
+- Do not use `npm` or `yarn` — use `pnpm`
