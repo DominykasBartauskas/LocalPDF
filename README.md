@@ -7,14 +7,18 @@ A self-hosted PDF toolkit for merging, splitting, rotating, compressing and more
 |-------|-----------|
 | Backend | FastAPI, Python 3.12, uv |
 | PDF processing | pypdf, pikepdf, Pillow |
-| Frontend | React 18, Vite |
+| Frontend | React 19, TypeScript, Vite |
+| UI | Tailwind CSS v4, DaisyUI |
+| Deployment | Docker, Docker Compose |
 
 ## Project structure
 
 ```
 LocalPDF/
 ├── backend/        # FastAPI application
-├── frontend/       # React 18 + Vite application
+├── frontend/       # React 19 + Vite + TypeScript application
+├── Dockerfile      # Multi-stage build (frontend + backend)
+├── docker-compose.yml
 └── .env.example    # Environment variable template
 ```
 
@@ -34,7 +38,22 @@ Health check: `GET http://localhost:8000/health`
 
 ### Frontend
 
-Coming soon.
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+The frontend will be available at `http://localhost:5173`.
+
+### Docker (production)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+The app will be available at `http://localhost:8000`.
 
 ## Environment variables
 
