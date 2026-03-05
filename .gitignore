@@ -3,18 +3,6 @@
 .env.*
 !.env.example
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-.venv/
-*.egg-info/
-dist/
-build/
-
-# uv
-.python-version
-
 # OS
 .DS_Store
 Thumbs.db
