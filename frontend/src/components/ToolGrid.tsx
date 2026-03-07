@@ -30,7 +30,7 @@ const TOOLS: Tool[] = [
     label: 'Rotate',
     description: 'Rotate pages within a PDF',
     icon: RotateCw,
-    available: false,
+    available: true,
   },
   {
     id: 'delete',
