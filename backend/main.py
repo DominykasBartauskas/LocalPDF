@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from routers import info
+from routers import info, merge
 
 load_dotenv()
 
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(info.router, prefix="/api")
+app.include_router(merge.router, prefix="/api")
 
 
 @app.get("/health")
