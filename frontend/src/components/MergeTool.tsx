@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import FileDropzone from './FileDropzone'
+import PageGrid from './PageGrid'
 import ToolLayout from './ToolLayout'
 import useApi from '../hooks/useApi'
 
@@ -104,7 +105,12 @@ export default function MergeTool() {
 
   return (
     <ToolLayout title="Merge PDFs" sidebar={files.length > 0 ? sidebar : undefined}>
-      <FileDropzone onFiles={handleFiles} multiple />
+      <FileDropzone onFiles={handleFiles} multiple compact={files.length > 0} label={files.length > 0 ? 'Drop to add more' : undefined} />
+      {files.length > 0 && (
+        <div className="h-full overflow-y-auto">
+          <PageGrid files={files.map(f => ({ file: f, filename: f.name }))} />
+        </div>
+      )}
     </ToolLayout>
   )
 }

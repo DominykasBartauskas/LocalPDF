@@ -25,7 +25,7 @@ export default function ToolLayout({ title, children, sidebar }: Props) {
       </header>
 
       <main className="flex h-[calc(100vh-3.25rem)]">
-        <div className="flex flex-1 flex-col overflow-y-auto">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {children}
         </div>
         {sidebar && (
