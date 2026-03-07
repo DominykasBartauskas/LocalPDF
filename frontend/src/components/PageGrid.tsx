@@ -7,6 +7,73 @@ const PADDING = 24
 
 type FileEntry = { file: File; filename?: string }
 
+type LazyPageProps = {
+  file: File
+  filename?: string
+  pageNum: number
+  cardWidth: number
+  cardHeight: number
+  selected: boolean
+  onClick?: () => void
+}
+
+function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, onClick }: LazyPageProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '400px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      onClick={onClick}
+      className={`flex flex-col gap-2 ${onClick ? 'cursor-pointer' : ''}`}
+    >
+      <div
+        className={`relative flex items-center justify-center overflow-hidden rounded-2xl shadow-md transition-all ${
+          selected ? 'ring-2 ring-primary ring-offset-2' : 'hover:shadow-lg'
+        }`}
+        style={{ height: cardHeight }}
+      >
+        {visible ? (
+          <>
+            <Document file={file}>
+              <Page
+                pageNumber={pageNum}
+                width={cardWidth}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+            {filename && (
+              <div className="absolute bottom-0 left-0 right-0 truncate bg-black/40 px-2 py-1 text-center text-xs text-white backdrop-blur-sm">
+                {filename}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="h-full w-full animate-pulse bg-base-200" />
+        )}
+      </div>
+      <p className="text-center text-sm text-base-content/40">{pageNum}</p>
+    </div>
+  )
+}
+
 type Props = {
   files: FileEntry[]
   selectedPages?: Set<number>  // global indices across all files
@@ -60,38 +127,18 @@ export default function PageGrid({ files, selectedPages, onPageClick }: Props) {
         className="grid p-6"
         style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gap: GAP }}
       >
-        {allPages.map(({ key, file, filename, pageNum, globalIndex }) => {
-          const selected = selectedPages?.has(globalIndex)
-          return (
-            <div
-              key={key}
-              onClick={() => onPageClick?.(globalIndex)}
-              className={`flex flex-col gap-2 ${onPageClick ? 'cursor-pointer' : ''}`}
-            >
-              <div
-                className={`relative flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md transition-all ${
-                  selected ? 'ring-2 ring-primary ring-offset-2' : 'hover:shadow-lg'
-                }`}
-                style={{ height: cardHeight }}
-              >
-                <Document file={file}>
-                  <Page
-                    pageNumber={pageNum}
-                    width={cardWidth}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                  />
-                </Document>
-                {filename && (
-                  <div className="absolute bottom-0 left-0 right-0 truncate bg-black/40 px-2 py-1 text-center text-xs text-white backdrop-blur-sm">
-                    {filename}
-                  </div>
-                )}
-              </div>
-              <p className="text-center text-sm text-base-content/40">{pageNum}</p>
-            </div>
-          )
-        })}
+        {allPages.map(({ key, file, filename, pageNum, globalIndex }) => (
+          <LazyPage
+            key={key}
+            file={file}
+            filename={filename}
+            pageNum={pageNum}
+            cardWidth={cardWidth}
+            cardHeight={cardHeight}
+            selected={!!selectedPages?.has(globalIndex)}
+            onClick={onPageClick ? () => onPageClick(globalIndex) : undefined}
+          />
+        ))}
       </div>
     </div>
   )
