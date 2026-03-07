@@ -13,7 +13,7 @@ export default function FileDropzone({
   onFiles,
   accept = 'application/pdf',
   multiple = false,
-  label = 'Drop PDF here or click to browse',
+  label = 'Click to browse or drop PDF here',
   compact = false,
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -60,7 +60,7 @@ export default function FileDropzone({
       onDrop={onDrop}
       className={
         compact
-          ? `flex cursor-pointer items-center gap-3 border-b border-base-300 px-4 py-3 transition-colors ${dragging ? 'bg-primary/5' : 'hover:bg-base-200'}`
+          ? `flex cursor-pointer items-center justify-center gap-3 border-b border-base-300 px-4 py-8 transition-colors ${dragging ? 'bg-primary/5' : 'hover:bg-base-200'}`
           : `flex flex-1 cursor-pointer flex-col items-center justify-center transition-colors ${dragging ? 'bg-primary/5' : 'hover:bg-base-200'}`
       }
     >
@@ -74,7 +74,7 @@ export default function FileDropzone({
       />
       <UploadCloud
         className="shrink-0 text-base-content/40"
-        size={compact ? 16 : 40}
+        size={compact ? 24 : 40}
       />
       <p className={`text-base-content/60 ${compact ? 'text-sm' : 'mt-3 text-sm'}`}>{label}</p>
     </div>
