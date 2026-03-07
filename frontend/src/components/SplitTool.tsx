@@ -128,7 +128,7 @@ export default function SplitTool() {
 
   return (
     <ToolLayout title="Split PDF" sidebar={file ? sidebar : undefined}>
-      <FileDropzone onFiles={handleFiles} compact={!!file} label={file ? 'Drop to replace' : undefined} />
+      <FileDropzone onFiles={handleFiles} compact={!!file} label={file ? 'Click to browse or drop a PDF to replace' : undefined} />
       {file && <div className="h-full overflow-y-auto"><PageGrid files={[{ file, filename: file.name }]} /></div>}
     </ToolLayout>
   )

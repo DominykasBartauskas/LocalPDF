@@ -28,11 +28,13 @@ export default function ToolLayout({ title, children, sidebar }: Props) {
         <div className="flex flex-1 flex-col overflow-hidden">
           {children}
         </div>
-        {sidebar && (
-          <aside className="w-80 shrink-0 overflow-y-auto border-l border-base-300 bg-base-200 px-6 py-8">
+        <aside className={`shrink-0 overflow-hidden border-base-300 bg-base-200 transition-[width] duration-300 ease-in-out ${
+          sidebar ? 'w-80 border-l' : 'w-0'
+        }`}>
+          <div className="h-full w-80 overflow-y-auto px-6 py-8">
             {sidebar}
-          </aside>
-        )}
+          </div>
+        </aside>
       </main>
     </div>
   )

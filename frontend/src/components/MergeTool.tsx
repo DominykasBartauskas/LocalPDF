@@ -105,7 +105,7 @@ export default function MergeTool() {
 
   return (
     <ToolLayout title="Merge PDFs" sidebar={files.length > 0 ? sidebar : undefined}>
-      <FileDropzone onFiles={handleFiles} multiple compact={files.length > 0} label={files.length > 0 ? 'Drop to add more' : undefined} />
+      <FileDropzone onFiles={handleFiles} multiple compact={files.length > 0} label={files.length > 0 ? 'Click to browse or drop PDFs to add more' : undefined} />
       {files.length > 0 && (
         <div className="h-full overflow-y-auto">
           <PageGrid files={files.map(f => ({ file: f, filename: f.name }))} />
