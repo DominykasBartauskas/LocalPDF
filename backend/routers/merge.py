@@ -43,5 +43,5 @@ async def merge(files: List[UploadFile] = File(...)):
     return StreamingResponse(
         io.BytesIO(data),
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=merged.pdf"},
+        headers={"Content-Disposition": 'attachment; filename="merged.pdf"'},
     )
