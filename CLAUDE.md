@@ -7,7 +7,7 @@ No auth. No external uploads. Fully private.
 
 ## Current state
 - ✅ /api/info
-- ⬜ /api/merge
+- ✅ /api/merge
 - ⬜ /api/split
 - ⬜ /api/rotate
 - ⬜ /api/delete
