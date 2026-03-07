@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import FileDropzone from './FileDropzone'
+import PageGrid from './PageGrid'
 import ToolLayout from './ToolLayout'
 import useApi from '../hooks/useApi'
 
@@ -127,7 +128,8 @@ export default function SplitTool() {
 
   return (
     <ToolLayout title="Split PDF" sidebar={file ? sidebar : undefined}>
-      <FileDropzone onFiles={handleFiles} />
+      <FileDropzone onFiles={handleFiles} compact={!!file} label={file ? 'Drop to replace' : undefined} />
+      {file && <div className="h-full overflow-y-auto"><PageGrid files={[{ file, filename: file.name }]} /></div>}
     </ToolLayout>
   )
 }

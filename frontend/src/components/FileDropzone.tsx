@@ -1,10 +1,12 @@
 import { useRef, useState, useCallback } from 'react'
+import { UploadCloud } from 'lucide-react'
 
 type FileDropzoneProps = {
   onFiles: (files: File[]) => void
   accept?: string
   multiple?: boolean
   label?: string
+  compact?: boolean
 }
 
 export default function FileDropzone({
@@ -12,6 +14,7 @@ export default function FileDropzone({
   accept = 'application/pdf',
   multiple = false,
   label = 'Drop PDF here or click to browse',
+  compact = false,
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -55,9 +58,11 @@ export default function FileDropzone({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      className={`flex flex-1 cursor-pointer flex-col items-center justify-center transition-colors ${
-        dragging ? 'bg-primary/5' : 'hover:bg-base-200'
-      }`}
+      className={
+        compact
+          ? `flex cursor-pointer items-center gap-3 border-b border-base-300 px-4 py-3 transition-colors ${dragging ? 'bg-primary/5' : 'hover:bg-base-200'}`
+          : `flex flex-1 cursor-pointer flex-col items-center justify-center transition-colors ${dragging ? 'bg-primary/5' : 'hover:bg-base-200'}`
+      }
     >
       <input
         ref={inputRef}
@@ -67,21 +72,11 @@ export default function FileDropzone({
         className="hidden"
         onChange={e => handleFiles(e.target.files)}
       />
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="mb-3 h-10 w-10 text-base-content/40"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-        />
-      </svg>
-      <p className="text-sm text-base-content/60">{label}</p>
+      <UploadCloud
+        className="shrink-0 text-base-content/40"
+        size={compact ? 16 : 40}
+      />
+      <p className={`text-base-content/60 ${compact ? 'text-sm' : 'mt-3 text-sm'}`}>{label}</p>
     </div>
   )
 }
