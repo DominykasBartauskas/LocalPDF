@@ -112,16 +112,20 @@ type Props = {
   files: FileEntry[]
   selectedPages?: Set<number>  // global indices across all files
   onPageClick?: (globalIndex: number) => void
+  rotations?: Map<number, number>  // controlled: parent owns rotation state
   onRotatePage?: (globalIndex: number, degrees: number) => void
   onDeletePage?: (globalIndex: number) => void
 }
 
-export default function PageGrid({ files, selectedPages, onPageClick, onRotatePage, onDeletePage  }: Props) {
+export default function PageGrid({ files, selectedPages, onPageClick, rotations: controlledRotations, onRotatePage, onDeletePage  }: Props) {
   const [pageCounts, setPageCounts] = useState<Map<File, number>>(() => new Map())
   const [cardWidth, setCardWidth] = useState(180)
-  const [rotations, setRotations] = useState<Map<number, number>>(() => new Map())
+  const [internalRotations, setInternalRotations] = useState<Map<number, number>>(() => new Map())
   const [deletedPages, setDeletedPages] = useState<Set<number>>(() => new Set())
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const isControlled = controlledRotations !== undefined
+  const effectiveRotations = isControlled ? controlledRotations : internalRotations
 
   useEffect(() => {
     const el = containerRef.current
@@ -148,13 +152,18 @@ export default function PageGrid({ files, selectedPages, onPageClick, onRotatePa
   )
 
   const handleRotate = (idx: number) => {
-    setRotations(prev => {
-      const next = new Map(prev)
-      const cumulative = (next.get(idx) ?? 0) + 90
-      next.set(idx, cumulative)
+    const current = effectiveRotations.get(idx) ?? 0
+    const cumulative = current + 90
+    if (isControlled) {
+      onRotatePage?.(idx, cumulative)
+    } else {
+      setInternalRotations(prev => {
+        const next = new Map(prev)
+        next.set(idx, cumulative)
+        return next
+      })
       onRotatePage?.(idx, cumulative % 360)
-      return next
-    })
+    }
   }
 
   const handleDelete = (idx: number) => {
@@ -193,7 +202,7 @@ export default function PageGrid({ files, selectedPages, onPageClick, onRotatePa
             cardWidth={cardWidth}
             cardHeight={cardHeight}
             selected={!!selectedPages?.has(globalIndex)}
-            rotation={rotations.get(globalIndex) ?? 0}
+            rotation={effectiveRotations.get(globalIndex) ?? 0}
             onClick={onPageClick ? () => onPageClick(globalIndex) : undefined}
             onRotate={() => handleRotate(globalIndex)}
             onDelete={() => handleDelete(globalIndex)}
