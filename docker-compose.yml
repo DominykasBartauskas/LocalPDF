@@ -1,5 +1,5 @@
 services:
-  app:
+  localpdf:
     build: .
     ports:
       - "${BACKEND_PORT:-8585}:8585"
