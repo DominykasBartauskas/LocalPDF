@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { RotateCw, Trash2 } from 'lucide-react'
 import { Document, Page } from 'react-pdf'
 
 const COLS = 4
@@ -14,12 +15,16 @@ type LazyPageProps = {
   cardWidth: number
   cardHeight: number
   selected: boolean
+  rotation: number
   onClick?: () => void
+  onRotate: () => void
+  onDelete: () => void
 }
 
-function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, onClick }: LazyPageProps) {
+function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, rotation, onClick, onRotate, onDelete }: LazyPageProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const el = ref.current
@@ -37,11 +42,15 @@ function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, on
     return () => observer.disconnect()
   }, [])
 
+  const isLandscape = (rotation / 90) % 2 !== 0
+  const rotationScale = isLandscape ? cardWidth / cardHeight : 1
+
   return (
     <div
       ref={ref}
       onClick={onClick}
-      className={`flex flex-col gap-2 ${onClick ? 'cursor-pointer' : ''}`}
+      onTransitionEnd={(e) => { if (deleting && e.propertyName === 'opacity') onDelete() }}
+      className={`group flex flex-col gap-2 transition-all duration-200 ${deleting ? 'scale-90 opacity-0' : ''} ${onClick ? 'cursor-pointer' : ''}`}
     >
       <div
         className={`relative flex items-center justify-center overflow-hidden rounded-2xl shadow-md transition-all ${
@@ -51,14 +60,21 @@ function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, on
       >
         {visible ? (
           <>
-            <Document file={file}>
-              <Page
-                pageNumber={pageNum}
-                width={cardWidth}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-            </Document>
+            <div
+              style={{
+                transform: `rotate(${rotation}deg) scale(${rotationScale})`,
+                transition: 'transform 0.25s ease',
+              }}
+            >
+              <Document file={file}>
+                <Page
+                  pageNumber={pageNum}
+                  width={cardWidth}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
+              </Document>
+            </div>
             {filename && (
               <div className="absolute bottom-0 left-0 right-0 truncate bg-black/40 px-2 py-1 text-center text-xs text-white backdrop-blur-sm">
                 {filename}
@@ -68,6 +84,24 @@ function LazyPage({ file, filename, pageNum, cardWidth, cardHeight, selected, on
         ) : (
           <div className="h-full w-full animate-pulse bg-base-200" />
         )}
+
+        {/* Action buttons — visible on hover */}
+        <div className="absolute right-1.5 top-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+          <button
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+            title="Rotate 90°"
+            onClick={e => { e.stopPropagation(); onRotate() }}
+          >
+            <RotateCw size={14} />
+          </button>
+          <button
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-error/80"
+            title="Delete page"
+            onClick={e => { e.stopPropagation(); setDeleting(true) }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <p className="text-center text-sm text-base-content/40">{pageNum}</p>
     </div>
@@ -78,11 +112,15 @@ type Props = {
   files: FileEntry[]
   selectedPages?: Set<number>  // global indices across all files
   onPageClick?: (globalIndex: number) => void
+  onRotatePage?: (globalIndex: number, degrees: number) => void
+  onDeletePage?: (globalIndex: number) => void
 }
 
-export default function PageGrid({ files, selectedPages, onPageClick }: Props) {
+export default function PageGrid({ files, selectedPages, onPageClick, onRotatePage, onDeletePage  }: Props) {
   const [pageCounts, setPageCounts] = useState<Map<File, number>>(() => new Map())
   const [cardWidth, setCardWidth] = useState(180)
+  const [rotations, setRotations] = useState<Map<number, number>>(() => new Map())
+  const [deletedPages, setDeletedPages] = useState<Set<number>>(() => new Set())
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -109,6 +147,25 @@ export default function PageGrid({ files, selectedPages, onPageClick }: Props) {
     }))
   )
 
+  const handleRotate = (idx: number) => {
+    setRotations(prev => {
+      const next = new Map(prev)
+      const cumulative = (next.get(idx) ?? 0) + 90
+      next.set(idx, cumulative)
+      onRotatePage?.(idx, cumulative % 360)
+      return next
+    })
+  }
+
+  const handleDelete = (idx: number) => {
+    setDeletedPages(prev => {
+      const next = new Set(prev)
+      next.add(idx)
+      onDeletePage?.(idx)
+      return next
+    })
+  }
+
   return (
     <div ref={containerRef}>
       {/* Hidden documents used only to resolve page counts */}
@@ -127,7 +184,7 @@ export default function PageGrid({ files, selectedPages, onPageClick }: Props) {
         className="grid p-6"
         style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gap: GAP }}
       >
-        {allPages.map(({ key, file, filename, pageNum, globalIndex }) => (
+        {allPages.filter(({ globalIndex }) => !deletedPages.has(globalIndex)).map(({ key, file, filename, pageNum, globalIndex }) => (
           <LazyPage
             key={key}
             file={file}
@@ -136,7 +193,10 @@ export default function PageGrid({ files, selectedPages, onPageClick }: Props) {
             cardWidth={cardWidth}
             cardHeight={cardHeight}
             selected={!!selectedPages?.has(globalIndex)}
+            rotation={rotations.get(globalIndex) ?? 0}
             onClick={onPageClick ? () => onPageClick(globalIndex) : undefined}
+            onRotate={() => handleRotate(globalIndex)}
+            onDelete={() => handleDelete(globalIndex)}
           />
         ))}
       </div>
