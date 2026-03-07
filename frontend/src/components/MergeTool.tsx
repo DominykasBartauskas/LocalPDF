@@ -39,12 +39,10 @@ export default function MergeTool() {
     setSubmitted(false)
   }
 
-  return (
-    <ToolLayout title="Merge PDFs">
-      <FileDropzone onFiles={handleFiles} multiple label="Drop PDFs to merge" />
-
+  const sidebar = (
+    <>
       {files.length > 0 && (
-        <ul className="mt-4 space-y-2">
+        <ul className="mb-6 space-y-2">
           {files.map((file, i) => (
             <li
               key={i}
@@ -65,7 +63,7 @@ export default function MergeTool() {
 
       {!isSuccess && (
         <button
-          className="btn btn-primary mt-6 w-full"
+          className="btn btn-primary w-full"
           disabled={files.length < 2 || loading}
           onClick={handleMerge}
         >
@@ -76,7 +74,7 @@ export default function MergeTool() {
       )}
 
       {isSuccess && (
-        <div role="status" className="mt-6 rounded-xl border border-success bg-success/10 p-4">
+        <div role="status" className="rounded-xl border border-success bg-success/10 p-4">
           <div className="flex items-start gap-3">
             <CheckCircle size={20} className="mt-0.5 shrink-0 text-success" />
             <div className="flex-1">
@@ -91,7 +89,7 @@ export default function MergeTool() {
       )}
 
       {isError && (
-        <div role="alert" className="mt-6 rounded-xl border border-error bg-error/10 p-4">
+        <div role="alert" className="rounded-xl border border-error bg-error/10 p-4">
           <div className="flex items-start gap-3">
             <XCircle size={20} className="mt-0.5 shrink-0 text-error" />
             <div>
@@ -101,6 +99,12 @@ export default function MergeTool() {
           </div>
         </div>
       )}
+    </>
+  )
+
+  return (
+    <ToolLayout title="Merge PDFs" sidebar={files.length > 0 ? sidebar : undefined}>
+      <FileDropzone onFiles={handleFiles} multiple />
     </ToolLayout>
   )
 }
