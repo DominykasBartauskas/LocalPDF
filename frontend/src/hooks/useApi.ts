@@ -38,7 +38,20 @@ function useApi<T = unknown>() {
       const response = await fetch(`/api${endpoint}`, fetchOptions)
 
       if (!response.ok) {
-        const message = await response.text()
+        const text = await response.text()
+        let message: string
+        try {
+          const detail = JSON.parse(text)?.detail
+          if (typeof detail === 'string') {
+            message = detail
+          } else if (detail != null) {
+            message = JSON.stringify(detail)
+          } else {
+            message = text
+          }
+        } catch {
+          message = text
+        }
         throw new Error(message || `Request failed with status ${response.status}`)
       }
 

@@ -17,27 +17,33 @@ No auth. No external uploads. Fully private.
 
 ## Stack
 - **Backend**: Python 3.12, FastAPI, uv — lives in `backend/`
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, DaisyUI, pnpm — lives in `frontend/`
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, DaisyUI v5, react-router-dom, lucide-react, pnpm — lives in `frontend/`
 - **PDF processing**: pypdf, pikepdf, Pillow
-- **Notifications**: react-hot-toast
+- **Notifications**: react-hot-toast (for edge cases only — prefer inline result cards)
 - **Deployment**: Docker + Docker Compose (single service)
 
 ## Project structure
 ```
 backend/
   main.py           # App setup, middleware, router registration, static mount
-  utils.py          # Shared utilities (temp_pdf context manager)
+  utils.py          # Shared utilities (temp_pdf, temp_pdfs context managers)
   routers/          # One file per feature/tool
     info.py
+    merge.py
+    split.py
 frontend/
+  index.html        # data-theme="light" set here
   src/
-    App.tsx
+    App.tsx         # BrowserRouter + Routes (one Route per tool)
     main.tsx
+    index.css       # Tailwind + DaisyUI plugin + primary color override (maroon)
     hooks/
       useApi.ts     # Shared API hook — use for every backend call
     components/
       FileDropzone.tsx   # Shared dropzone — use for every file upload
-      (one file per tool)
+      ToolLayout.tsx     # Shared wrapper for tool pages (back nav + title)
+      ToolGrid.tsx       # Main page — grid of tool cards
+      (one file per tool: MergeTool.tsx, SplitTool.tsx, ...)
 ```
 
 ## Backend conventions
@@ -49,11 +55,16 @@ frontend/
 - `/health` lives directly in `main.py` (no prefix)
 
 ### File uploads
-- Always use the `temp_pdf` async context manager from `utils.py`
+- Always use the `temp_pdf` / `temp_pdfs` async context managers from `utils.py`
 - Never inline temp file logic in route handlers
 
 ```python
+# Single file
 async with temp_pdf(file) as path:
+    ...
+
+# Multiple files
+async with temp_pdfs(files) as paths:
     ...
 ```
 
@@ -97,19 +108,32 @@ await request('/merge', { body: formData, download: true, filename: 'merged.pdf'
 <FileDropzone onFiles={handleFiles} multiple label="Drop PDFs to merge" />
 ```
 
-### Notifications
-- Use `react-hot-toast` for all user feedback
-- Prefer `toast.promise()` for async operations
+### Routing
+- `react-router-dom` (`BrowserRouter` + `Routes`) — one `Route` per tool
+- Main page `/` renders `ToolGrid`; each tool lives at `/<tool-id>` (e.g. `/merge`, `/split`)
+- Wrap every tool page in `<ToolLayout title="...">` for consistent back-nav header
+- Register new routes in `App.tsx` and add the tool card to `ToolGrid.tsx`
 
-```ts
-toast.promise(request('/merge', { body: formData, download: true }), {
-  loading: 'Merging...', success: 'Done!', error: 'Something went wrong',
-})
-```
+### Result states
+- Tool pages show inline result cards (success/error) after an operation — do NOT use `toast.promise` for primary feedback
+- Use the `submitted && !loading` pattern to derive result state from `useApi` without stale closure issues:
+  ```tsx
+  const showResult = submitted && !loading
+  const isSuccess = showResult && !error
+  const isError = showResult && !!error
+  ```
+- Success card: green border, `CheckCircle` icon, relevant info, "Do it again" reset button
+- Error card: red border, `XCircle` icon, error message from API (already parsed by `useApi`)
+
+### Notifications
+- `react-hot-toast` for incidental feedback only (e.g. silent background errors)
+- Do NOT use `toast.promise` for primary tool operations — use inline result cards instead
 
 ### Styling
 - Tailwind CSS v4 for layout and spacing
-- DaisyUI components for UI elements (buttons, cards, modals, alerts)
+- DaisyUI v5 components for UI elements (buttons, cards, alerts)
+- Theme: forced `data-theme="light"` in `index.html`; primary color overridden to maroon in `index.css`
+- Icons: `lucide-react` — current icons are placeholders pending custom icon assets; use lucide-react for all new tools until replaced
 - No heavy UI libraries — keep it lean
 - One component file per tool in `src/components/`
 
