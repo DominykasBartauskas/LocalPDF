@@ -93,7 +93,7 @@ export default function ToolGrid() {
               <Link
                 key={tool.id}
                 to={`/${tool.id}`}
-                className="card rounded-xl border-2 border-base-300 bg-base-100 transition-all hover:border-primary hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="card rounded-xl border-2 border-base-300 bg-base-100 transition-all hover:border-primary hover:shadow-md hover:scale-105 focus:outline-none focus:border-primary focus:shadow-md"
               >
                 {cardBody}
               </Link>

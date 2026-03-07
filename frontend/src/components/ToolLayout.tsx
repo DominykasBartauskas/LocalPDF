@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom'
 type Props = {
   title: string
   children: React.ReactNode
+  sidebar?: React.ReactNode
 }
 
-export default function ToolLayout({ title, children }: Props) {
+export default function ToolLayout({ title, children, sidebar }: Props) {
   const navigate = useNavigate()
 
   return (
@@ -23,8 +24,15 @@ export default function ToolLayout({ title, children }: Props) {
         <span className="font-semibold text-base-content">{title}</span>
       </header>
 
-      <main className="mx-auto w-full px-4 py-10 md:w-3/5 md:px-0">
-        {children}
+      <main className="flex h-[calc(100vh-3.25rem)]">
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          {children}
+        </div>
+        {sidebar && (
+          <aside className="w-80 shrink-0 overflow-y-auto border-l border-base-300 bg-base-200 px-6 py-8">
+            {sidebar}
+          </aside>
+        )}
       </main>
     </div>
   )

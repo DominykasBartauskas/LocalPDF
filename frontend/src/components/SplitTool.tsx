@@ -57,18 +57,16 @@ export default function SplitTool() {
     setSubmitted(false)
   }
 
-  return (
-    <ToolLayout title="Split PDF">
-      <FileDropzone onFiles={handleFiles} />
-
+  const sidebar = (
+    <>
       {file && (
-        <p className="mt-3 text-sm text-base-content/60">
+        <p className="mb-4 text-sm text-base-content/60">
           {file.name}{info ? ` — ${info.pages} pages` : ''}
         </p>
       )}
 
       {file && (
-        <div className="mt-4">
+        <div className="mb-6">
           <label className="label">
             <span className="label-text">Pages or ranges</span>
             {info && <span className="label-text-alt text-base-content/50">1–{info.pages}</span>}
@@ -86,7 +84,7 @@ export default function SplitTool() {
 
       {!isSuccess && (
         <button
-          className="btn btn-primary mt-6 w-full"
+          className="btn btn-primary w-full"
           disabled={!file || !ranges.trim() || loading}
           onClick={handleSplit}
         >
@@ -95,7 +93,7 @@ export default function SplitTool() {
       )}
 
       {isSuccess && (
-        <div role="status" className="mt-6 rounded-xl border border-success bg-success/10 p-4">
+        <div role="status" className="rounded-xl border border-success bg-success/10 p-4">
           <div className="flex items-start gap-3">
             <CheckCircle size={20} className="mt-0.5 shrink-0 text-success" />
             <div className="flex-1">
@@ -114,7 +112,7 @@ export default function SplitTool() {
       )}
 
       {isError && (
-        <div role="alert" className="mt-6 rounded-xl border border-error bg-error/10 p-4">
+        <div role="alert" className="rounded-xl border border-error bg-error/10 p-4">
           <div className="flex items-start gap-3">
             <XCircle size={20} className="mt-0.5 shrink-0 text-error" />
             <div>
@@ -124,6 +122,12 @@ export default function SplitTool() {
           </div>
         </div>
       )}
+    </>
+  )
+
+  return (
+    <ToolLayout title="Split PDF" sidebar={file ? sidebar : undefined}>
+      <FileDropzone onFiles={handleFiles} />
     </ToolLayout>
   )
 }
