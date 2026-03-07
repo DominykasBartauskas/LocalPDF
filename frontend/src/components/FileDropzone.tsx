@@ -55,7 +55,7 @@ export default function FileDropzone({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-colors ${
+      className={`flex aspect-video cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
         dragging ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary hover:bg-base-200'
       }`}
     >

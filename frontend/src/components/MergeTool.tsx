@@ -1,40 +1,56 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { CheckCircle, XCircle } from 'lucide-react'
 import FileDropzone from './FileDropzone'
+import ToolLayout from './ToolLayout'
 import useApi from '../hooks/useApi'
 
 export default function MergeTool() {
   const [files, setFiles] = useState<File[]>([])
-  const { loading, request } = useApi()
+  const [submitted, setSubmitted] = useState(false)
+  const { loading, error, request } = useApi()
+
+  const showResult = submitted && !loading
+  const isSuccess = showResult && !error
+  const isError = showResult && !!error
 
   const handleFiles = (incoming: File[]) => {
     setFiles(prev => [...prev, ...incoming])
+    setSubmitted(false)
   }
 
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index))
+    setSubmitted(false)
   }
 
-  const handleMerge = () => {
+  const handleMerge = async () => {
     const body = new FormData()
     files.forEach(f => body.append('files', f))
-    toast.promise(
-      request('/merge', { body, download: true, filename: 'merged.pdf' }),
-      { loading: 'Merging…', success: 'Merged!', error: (err) => err?.message ?? 'Something went wrong' },
-    )
+    setSubmitted(false)
+    try {
+      await request('/merge', { body, download: true, filename: 'merged.pdf' })
+    } finally {
+      setSubmitted(true)
+    }
+  }
+
+  const reset = () => {
+    setFiles([])
+    setSubmitted(false)
   }
 
   return (
-    <div className="mx-auto max-w-xl p-8">
-      <h2 className="mb-6 text-2xl font-bold">Merge PDFs</h2>
-
+    <ToolLayout title="Merge PDFs">
       <FileDropzone onFiles={handleFiles} multiple label="Drop PDFs to merge" />
 
       {files.length > 0 && (
         <ul className="mt-4 space-y-2">
           {files.map((file, i) => (
-            <li key={i} className="flex items-center justify-between rounded-lg bg-base-200 px-4 py-2 text-sm">
-              <span className="truncate">{file.name}</span>
+            <li
+              key={i}
+              className="flex items-center justify-between rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm"
+            >
+              <span className="truncate text-base-content">{file.name}</span>
               <button
                 className="btn btn-ghost btn-xs ml-4 text-error"
                 onClick={() => removeFile(i)}
@@ -47,13 +63,44 @@ export default function MergeTool() {
         </ul>
       )}
 
-      <button
-        className="btn btn-primary mt-6 w-full"
-        disabled={files.length < 2 || loading}
-        onClick={handleMerge}
-      >
-        {loading ? <span className="loading loading-spinner loading-sm" /> : `Merge ${files.length} PDFs`}
-      </button>
-    </div>
+      {!isSuccess && (
+        <button
+          className="btn btn-primary mt-6 w-full"
+          disabled={files.length < 2 || loading}
+          onClick={handleMerge}
+        >
+          {loading
+            ? <span className="loading loading-spinner loading-sm" />
+            : `Merge ${files.length > 0 ? files.length : ''} PDFs`.trim()}
+        </button>
+      )}
+
+      {isSuccess && (
+        <div role="status" className="mt-6 rounded-xl border border-success bg-success/10 p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle size={20} className="mt-0.5 shrink-0 text-success" />
+            <div className="flex-1">
+              <p className="font-semibold text-base-content">Merged successfully</p>
+              <p className="text-sm text-base-content/70">{files.length} files merged into one PDF</p>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={reset}>
+              Merge more
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isError && (
+        <div role="alert" className="mt-6 rounded-xl border border-error bg-error/10 p-4">
+          <div className="flex items-start gap-3">
+            <XCircle size={20} className="mt-0.5 shrink-0 text-error" />
+            <div>
+              <p className="font-semibold text-base-content">Merge failed</p>
+              <p className="text-sm text-base-content/70">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </ToolLayout>
   )
 }
