@@ -178,15 +178,15 @@ The Vite proxy forwards `/api/*` without rewriting — the `/api` prefix is pres
 Follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`
 
 - **type** (required): one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
-- **scope** (optional): the area touched — a tool/router (`merge`, `split`, `rotate`), `backend`, `frontend`, `docker`, `deps`, etc.
+- **scope** (optional): the **area** of the codebase touched — `backend`, `frontend`, or `docker`. Use the area, not the tool/feature name (`feat(backend)`, not `feat(info)`). Omit the scope for repo-wide changes (`docs:`, `ci:`) and for full-stack changes that touch both `backend/` and `frontend/`.
 - **description** (required): imperative mood, lowercase, no trailing period (e.g. "add", not "added"/"adds")
 
 ```
-feat(rotate): add per-page rotate buttons to the thumbnail grid
-fix(split): reject overlapping page ranges
+feat(backend): add /api/rotate endpoint
+feat(frontend): add per-page rotate buttons to the thumbnail grid
 test(backend): cover /api/merge error paths
+feat: add split tool (endpoint and SplitTool component)
 ci: run pytest and pnpm build on every PR
-docs: document conventional commit rules
 ```
 
 - Keep the subject line ≤ 72 chars; add a body (blank line, then wrapped text) for the *why* when it isn't obvious.
