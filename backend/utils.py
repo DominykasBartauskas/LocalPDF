@@ -1,9 +1,11 @@
+import io
 import os
 import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
 from fastapi import UploadFile
+from fastapi.responses import StreamingResponse
 import pikepdf
 
 
@@ -39,6 +41,17 @@ async def temp_pdfs(files: List[UploadFile]):
     finally:
         for path in paths:
             path.unlink(missing_ok=True)
+
+
+def pdf_download_response(
+    data: bytes, filename: str, media_type: str = "application/pdf"
+) -> StreamingResponse:
+    """Stream bytes back as a downloadable attachment."""
+    return StreamingResponse(
+        io.BytesIO(data),
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def rotate_pages(pdf: pikepdf.Pdf, rotations: dict[int, int]) -> None:

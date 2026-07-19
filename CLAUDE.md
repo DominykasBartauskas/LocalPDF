@@ -26,11 +26,17 @@ No auth. No external uploads. Fully private.
 ```
 backend/
   main.py           # App setup, middleware, router registration, static mount
-  utils.py          # Shared utilities (temp_pdf, temp_pdfs context managers)
-  routers/          # One file per feature/tool
-    info.py
-    merge.py
-    split.py
+  utils.py          # Shared utilities (temp_pdf/temp_pdfs, pdf_download_response, PDF primitives)
+  tools/            # One folder per tool — a vertical slice
+    info/
+      router.py     # Thin HTTP adapter (params, temp_pdf, executor, response) — NO business logic
+      handler.py    # Pure PDF business logic (sync, no FastAPI), raises ValueError on bad input
+    merge/
+      router.py
+      handler.py
+    split/
+      router.py
+      handler.py
 frontend/
   index.html        # data-theme="light" set here
   src/
@@ -50,7 +56,13 @@ frontend/
 
 ### Routes
 - All API endpoints live under `/api/*` via `app.include_router(router, prefix="/api")`
-- Each tool gets its own router file in `backend/routers/`
+- Each tool is a **vertical slice** — its own folder `backend/tools/<tool>/`:
+  - `router.py` — thin HTTP adapter. Declares params, opens the `temp_pdf`/`temp_pdfs`
+    context, offloads to `run_in_executor`, maps errors to `HTTPException`, returns the
+    response. **No PDF business logic here.** Exposes `router = APIRouter()`.
+  - `handler.py` — the PDF business logic. Pure, synchronous, no FastAPI imports.
+    Raises `ValueError` on bad input / corrupt PDFs.
+  - `__init__.py` — re-exports `router` (`from tools.<tool>.router import router`)
 - `main.py` only contains: app setup, middleware, router registrations, static mount
 - `/health` lives directly in `main.py` (no prefix)
 

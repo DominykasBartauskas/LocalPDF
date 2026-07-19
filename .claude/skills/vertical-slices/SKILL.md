@@ -20,7 +20,8 @@ The project rules and stack live in the repo's `CLAUDE.md` — **read it first**
 
 A **slice** = one PDF tool (merge, split, rotate, …) implemented end-to-end:
 
-- **Backend**: one router file in `backend/routers/<tool>.py` exposing `POST /api/<tool>`.
+- **Backend**: one folder `backend/tools/<tool>/` with `router.py` (thin HTTP adapter
+  exposing `POST /api/<tool>`) + `handler.py` (pure PDF business logic).
 - **Frontend**: one component `frontend/src/components/<Tool>Tool.tsx`.
 - **Wiring**: a `<Route>` in `App.tsx` and a card in `ToolGrid.tsx`.
 
@@ -29,16 +30,19 @@ uploaded PDF(s) + form params; output is a streamed file (or JSON for `/info`).
 
 ## Quick decision flow
 
-1. **Backend router shape.** Every tool gets its own file in `backend/routers/`.
-   - Pure sync PDF work goes in a private `_<verb>_pdf(path, ...)` helper.
-   - The `async def` handler only: validates params, opens a `temp_pdf`/`temp_pdfs`
-     context, offloads the helper via `run_in_executor`, and returns a
-     `StreamingResponse` (or dict).
-   - Register it in `main.py` with `app.include_router(<tool>.router, prefix="/api")`.
-2. **Shared vs slice-local logic.** Start with the logic inline in the router's
-   `_sync` helper. Promote a helper into `utils.py` only when a **second** router
-   needs it (as `rotate_pages`/`delete_pages` already are). Never pre-extract "for
-   consistency."
+1. **Backend slice shape.** Every tool gets its own folder `backend/tools/<tool>/`:
+   - `handler.py` holds the PDF business logic — a pure, synchronous
+     `<verb>_pdf(path, ...)` function with no FastAPI imports. It raises `ValueError`
+     on bad input / corrupt PDFs.
+   - `router.py` is a **thin** `async def` adapter: it validates params, opens a
+     `temp_pdf`/`temp_pdfs` context, offloads the handler via `run_in_executor`, maps
+     errors to `HTTPException`, and returns a `StreamingResponse` (or dict). **No PDF
+     business logic in the router.** It exposes `router = APIRouter()`.
+   - `__init__.py` re-exports `router` (`from tools.<tool>.router import router`);
+     register it in `main.py` with `app.include_router(<tool>.router, prefix="/api")`.
+2. **Shared vs slice-local logic.** Keep the logic in the slice's `handler.py`.
+   Promote a primitive into `utils.py` only when a **second** slice needs it (as
+   `rotate_pages`/`delete_pages` already are). Never pre-extract "for consistency."
 3. **File handling.** Always use `temp_pdf`/`temp_pdfs` from `utils.py` — never
    inline `tempfile` logic in a handler.
 4. **Blocking work.** All pypdf/pikepdf/Pillow calls are synchronous — always run
@@ -60,14 +64,16 @@ uploaded PDF(s) + form params; output is a streamed file (or JSON for `/info`).
 
 ## Actions
 
-- **new-slice** — scaffold a full tool: `backend/routers/<tool>.py` (sync helper +
-  handler + `main.py` registration), `frontend/src/components/<Tool>Tool.tsx`, its
-  `App.tsx` route, and its `ToolGrid.tsx` card. Confirm existing layout with `ls`
-  before writing, and mirror an existing tool (e.g. `rotate`) closely.
-- **review `<path>`** — check a slice against Decisions 1–8: blocking work off the
-  event loop, `temp_pdf` used (no inline temp logic), library errors mapped to 400,
-  `useApi`/`FileDropzone` used (no raw `fetch`/custom dropzone), inline result cards
-  (no `toast.promise`), route + card both wired.
+- **new-slice** — scaffold a full tool: `backend/tools/<tool>/` (`handler.py` logic +
+  thin `router.py` + `__init__.py` re-export + `main.py` registration),
+  `frontend/src/components/<Tool>Tool.tsx`, its `App.tsx` route, and its `ToolGrid.tsx`
+  card. Confirm existing layout with `ls` before writing, and mirror an existing tool
+  (e.g. `rotate`) closely.
+- **review `<path>`** — check a slice against Decisions 1–8: business logic in
+  `handler.py` (router stays thin), blocking work off the event loop, `temp_pdf` used
+  (no inline temp logic), library errors mapped to 400, `useApi`/`FileDropzone` used
+  (no raw `fetch`/custom dropzone), inline result cards (no `toast.promise`), route +
+  card both wired.
 - **explain** — print `CLAUDE.md` above and walk the requester through the flow.
 
 ## Don't

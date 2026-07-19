@@ -1,19 +1,12 @@
-import asyncio
 import io
 import zipfile
 from pathlib import Path
 from typing import List
 
 import pikepdf
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
-
-from utils import temp_pdf
-
-router = APIRouter()
 
 
-def _parse_ranges(range_str: str, total_pages: int) -> List[tuple[int, int]]:
+def parse_ranges(range_str: str, total_pages: int) -> List[tuple[int, int]]:
     ranges = []
     for part in range_str.split(","):
         part = part.strip()
@@ -40,11 +33,11 @@ def _parse_ranges(range_str: str, total_pages: int) -> List[tuple[int, int]]:
     return ranges
 
 
-def _split_pdf(path: Path, range_str: str) -> tuple[bytes, str, str]:
+def split_pdf(path: Path, range_str: str) -> tuple[bytes, str, str]:
     try:
         with pikepdf.open(path) as src:
             total = len(src.pages)
-            ranges = _parse_ranges(range_str, total)
+            ranges = parse_ranges(range_str, total)
 
             results = []
             for start, end in ranges:
@@ -71,21 +64,3 @@ def _split_pdf(path: Path, range_str: str) -> tuple[bytes, str, str]:
             name = f"page-{start}.pdf" if start == end else f"pages-{start}-{end}.pdf"
             zf.writestr(name, data)
     return zip_buf.getvalue(), "application/zip", "split.zip"
-
-
-@router.post("/split")
-async def split(file: UploadFile = File(...), ranges: str = Form(...)):
-    async with temp_pdf(file) as path:
-        loop = asyncio.get_running_loop()
-        try:
-            data, media_type, filename = await loop.run_in_executor(
-                None, _split_pdf, path, ranges
-            )
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e) or "Invalid or corrupt PDF file")
-
-    return StreamingResponse(
-        io.BytesIO(data),
-        media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
