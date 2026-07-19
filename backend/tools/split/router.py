@@ -1,6 +1,7 @@
 import asyncio
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
 from tools.split.handler import split_pdf
 from utils import pdf_download_response, temp_pdf
@@ -9,7 +10,7 @@ router = APIRouter()
 
 
 @router.post("/split")
-async def split(file: UploadFile = File(...), ranges: str = Form(...)):
+async def split(file: UploadFile = File(...), ranges: str = Form(...)) -> StreamingResponse:
     async with temp_pdf(file) as path:
         loop = asyncio.get_running_loop()
         try:

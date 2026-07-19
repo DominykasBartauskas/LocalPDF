@@ -21,7 +21,8 @@ The project rules and stack live in the repo's `CLAUDE.md` — **read it first**
 A **slice** = one PDF tool (merge, split, rotate, …) implemented end-to-end:
 
 - **Backend**: one folder `backend/tools/<tool>/` with `router.py` (thin HTTP adapter
-  exposing `POST /api/<tool>`) + `handler.py` (pure PDF business logic).
+  exposing `POST /api/<tool>`) + `handler.py` (pure PDF business logic) + an optional
+  `schemas.py` (the slice's DTOs).
 - **Frontend**: one component `frontend/src/components/<Tool>Tool.tsx`.
 - **Wiring**: a `<Route>` in `App.tsx` and a card in `ToolGrid.tsx`.
 
@@ -36,8 +37,13 @@ uploaded PDF(s) + form params; output is a streamed file (or JSON for `/info`).
      on bad input / corrupt PDFs.
    - `router.py` is a **thin** `async def` adapter: it validates params, opens a
      `temp_pdf`/`temp_pdfs` context, offloads the handler via `run_in_executor`, maps
-     errors to `HTTPException`, and returns a `StreamingResponse` (or dict). **No PDF
+     errors to `HTTPException`, and returns a `StreamingResponse` (or a DTO). **No PDF
      business logic in the router.** It exposes `router = APIRouter()`.
+   - `schemas.py` holds the slice's DTOs — add it only when the slice needs one.
+     A JSON response gets a Pydantic `BaseModel` wired as the route's `response_model`
+     (`InfoResponse`); a non-trivial handler return gets a typed result
+     (`NamedTuple`/dataclass, `SplitResult`/`PageRange`) instead of a bare `tuple`/`dict`.
+     Raw file payloads stay `bytes` — no DTO. Annotate return types everywhere.
    - `__init__.py` re-exports `router` (`from tools.<tool>.router import router`);
      register it in `main.py` with `app.include_router(<tool>.router, prefix="/api")`.
 2. **Shared vs slice-local logic.** Keep the logic in the slice's `handler.py`.

@@ -31,12 +31,14 @@ backend/
     info/
       router.py     # Thin HTTP adapter (params, temp_pdf, executor, response) — NO business logic
       handler.py    # Pure PDF business logic (sync, no FastAPI), raises ValueError on bad input
+      schemas.py    # DTOs for this slice (Pydantic response models / typed handler results)
     merge/
       router.py
       handler.py
     split/
       router.py
       handler.py
+      schemas.py
 frontend/
   index.html        # data-theme="light" set here
   src/
@@ -62,6 +64,11 @@ frontend/
     response. **No PDF business logic here.** Exposes `router = APIRouter()`.
   - `handler.py` — the PDF business logic. Pure, synchronous, no FastAPI imports.
     Raises `ValueError` on bad input / corrupt PDFs.
+  - `schemas.py` — the slice's DTOs (add only when the slice needs one; not every
+    slice has one). JSON responses get a Pydantic `BaseModel` wired as the route's
+    `response_model` (e.g. `InfoResponse`); non-trivial handler return values get a
+    typed result (`NamedTuple`/dataclass, e.g. `SplitResult`) instead of a bare
+    `tuple`/`dict`. Raw file payloads stay `bytes` — no DTO.
   - `__init__.py` — re-exports `router` (`from tools.<tool>.router import router`)
 - `main.py` only contains: app setup, middleware, router registrations, static mount
 - `/health` lives directly in `main.py` (no prefix)

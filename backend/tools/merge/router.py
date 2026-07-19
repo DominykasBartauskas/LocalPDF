@@ -2,6 +2,7 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
 from tools.merge.handler import merge_pdfs
 from utils import pdf_download_response, temp_pdfs
@@ -10,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/merge")
-async def merge(files: List[UploadFile] = File(...)):
+async def merge(files: List[UploadFile] = File(...)) -> StreamingResponse:
     if len(files) < 2:
         raise HTTPException(status_code=400, detail="At least 2 PDF files are required")
 

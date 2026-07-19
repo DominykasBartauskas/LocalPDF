@@ -1,6 +1,7 @@
 import asyncio
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
 from tools.rotate.handler import rotate_pdf
 from utils import pdf_download_response, temp_pdf
@@ -9,7 +10,7 @@ router = APIRouter()
 
 
 @router.post("/rotate")
-async def rotate(file: UploadFile = File(...), rotations: str = Form(...)):
+async def rotate(file: UploadFile = File(...), rotations: str = Form(...)) -> StreamingResponse:
     async with temp_pdf(file) as path:
         loop = asyncio.get_running_loop()
         try:

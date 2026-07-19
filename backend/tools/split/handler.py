@@ -5,8 +5,10 @@ from typing import List
 
 import pikepdf
 
+from tools.split.schemas import PageRange, SplitResult
 
-def parse_ranges(range_str: str, total_pages: int) -> List[tuple[int, int]]:
+
+def parse_ranges(range_str: str, total_pages: int) -> List[PageRange]:
     ranges = []
     for part in range_str.split(","):
         part = part.strip()
@@ -27,13 +29,13 @@ def parse_ranges(range_str: str, total_pages: int) -> List[tuple[int, int]]:
             raise ValueError(
                 f"Range {start}-{end} is out of bounds (PDF has {total_pages} pages)"
             )
-        ranges.append((start, end))
+        ranges.append(PageRange(start, end))
     if not ranges:
         raise ValueError("No valid ranges specified")
     return ranges
 
 
-def split_pdf(path: Path, range_str: str) -> tuple[bytes, str, str]:
+def split_pdf(path: Path, range_str: str) -> SplitResult:
     try:
         with pikepdf.open(path) as src:
             total = len(src.pages)
@@ -56,11 +58,11 @@ def split_pdf(path: Path, range_str: str) -> tuple[bytes, str, str]:
     if len(results) == 1:
         start, end, data = results[0]
         name = f"page-{start}.pdf" if start == end else f"pages-{start}-{end}.pdf"
-        return data, "application/pdf", name
+        return SplitResult(data, "application/pdf", name)
 
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for start, end, data in results:
             name = f"page-{start}.pdf" if start == end else f"pages-{start}-{end}.pdf"
             zf.writestr(name, data)
-    return zip_buf.getvalue(), "application/zip", "split.zip"
+    return SplitResult(zip_buf.getvalue(), "application/zip", "split.zip")
