@@ -37,3 +37,11 @@ repos:
         types_or: [ts, tsx, javascript, jsx]
         pass_filenames: false
         files: ^frontend/
+
+      - id: vitest
+        name: frontend tests (vitest)
+        entry: bash -c 'cd frontend && pnpm test'
+        language: system
+        types_or: [ts, tsx, javascript, jsx]
+        pass_filenames: false
+        files: ^frontend/
