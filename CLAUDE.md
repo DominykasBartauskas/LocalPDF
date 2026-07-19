@@ -172,6 +172,27 @@ docker compose up --build
 
 The Vite proxy forwards `/api/*` without rewriting — the `/api` prefix is preserved end-to-end.
 
+## Git conventions
+
+### Commit messages
+Follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`
+
+- **type** (required): one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+- **scope** (optional): the area touched — a tool/router (`merge`, `split`, `rotate`), `backend`, `frontend`, `docker`, `deps`, etc.
+- **description** (required): imperative mood, lowercase, no trailing period (e.g. "add", not "added"/"adds")
+
+```
+feat(rotate): add per-page rotate buttons to the thumbnail grid
+fix(split): reject overlapping page ranges
+test(backend): cover /api/merge error paths
+ci: run pytest and pnpm build on every PR
+docs: document conventional commit rules
+```
+
+- Keep the subject line ≤ 72 chars; add a body (blank line, then wrapped text) for the *why* when it isn't obvious.
+- Breaking changes: append `!` after type/scope (`feat(api)!: ...`) or add a `BREAKING CHANGE:` footer.
+- One logical change per commit — don't mix a feature with unrelated refactors.
+
 ## What NOT to do
 - Do not add auth — this is intentionally auth-free
 - Do not add heavy UI libraries (no MUI, Chakra, Radix, etc.)
