@@ -1,3 +1,4 @@
+import os
 import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -6,11 +7,23 @@ from fastapi import UploadFile
 import pikepdf
 
 
+async def _spool_to_temp(file: UploadFile) -> Path:
+    """Atomically create a secure temp file and write the upload into it."""
+    fd, name = tempfile.mkstemp(suffix=".pdf")
+    path = Path(name)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(await file.read())
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+    return path
+
+
 @asynccontextmanager
 async def temp_pdf(file: UploadFile):
-    path = Path(tempfile.mktemp(suffix=".pdf"))
+    path = await _spool_to_temp(file)
     try:
-        path.write_bytes(await file.read())
         yield path
     finally:
         path.unlink(missing_ok=True)
@@ -21,9 +34,7 @@ async def temp_pdfs(files: List[UploadFile]):
     paths: List[Path] = []
     try:
         for file in files:
-            path = Path(tempfile.mktemp(suffix=".pdf"))
-            paths.append(path)
-            path.write_bytes(await file.read())
+            paths.append(await _spool_to_temp(file))
         yield paths
     finally:
         for path in paths:

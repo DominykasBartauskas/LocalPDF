@@ -23,6 +23,12 @@ async def test_temp_pdf_writes_and_cleans_up(one_page_pdf):
 
 
 @pytest.mark.asyncio
+async def test_temp_pdf_uses_owner_only_permissions(one_page_pdf):
+    async with temp_pdf(_upload(one_page_pdf)) as path:
+        assert (path.stat().st_mode & 0o777) == 0o600
+
+
+@pytest.mark.asyncio
 async def test_temp_pdf_cleans_up_on_exception(one_page_pdf):
     saved = None
     with pytest.raises(RuntimeError):
